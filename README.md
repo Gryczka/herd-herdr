@@ -1,5 +1,6 @@
 # Herd Herdr
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Gryczka/herd-herdr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > A browser game for learning practical keyboard shortcuts through a playful herding campaign.
