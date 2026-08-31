@@ -1,0 +1,67 @@
+.editorconfig
+  s_d98432f0516d90::t_218fd7f6c4c53e 1-12
+.github/ISSUE_TEMPLATE/bug_report.md
+  s_64b4bfcc2ab174::t_c64187c2f4fc60 1-39
+.github/ISSUE_TEMPLATE/feature_request.md
+  s_64b4bfcc2ab174::t_557e30aabee964 1-24
+.github/workflows/ci.yml
+  s_d98432f0516d90::t_84e0f507c0f0ae 1-31
+.prettierignore
+  s_d98432f0516d90::t_98323ffcab84b9 1-4
+.prettierrc
+  s_d98432f0516d90::t_dbd393200c43de 1-6
+AGENTS.md
+  s_d98432f0516d90::t_70fbb2d4b0a095 1-41
+README.md
+  s_64b4bfcc2ab174::t_15bf0a8c830c20 1-176
+SECURITY.md
+  s_64b4bfcc2ab174::t_22ebab27e4c93b 1-24
+eslint.config.js
+  s_d98432f0516d90::t_a28e317b2eb13e 1-28
+package-lock.json
+  s_64b4bfcc2ab174::t_218aac761d5219 1-3592
+package.json
+  s_d98432f0516d90::t_9b5eef1ff89d39 1-33
+public/farm-world.js
+  s_64b4bfcc2ab174::t_54416db6eacc2a 1-1505
+public/favicon.svg
+  s_d98432f0516d90::t_a312ce97f37e07 1-9
+public/game-core.js
+  s_d98432f0516d90::t_dbf50ccd5e4d60 1-526
+public/game.js
+  s_d98432f0516d90::t_aa97bb9cb7c393 1-624
+public/index.html
+  s_d98432f0516d90::t_bc128690a1b761 1-256
+public/styles.css
+  s_d98432f0516d90::t_a3374359ca08ff 1-1864
+test/game-core.spec.js
+  s_d98432f0516d90::t_19e4c21002ec26 1-78
+vitest.config.js
+  s_d98432f0516d90::t_f028f2b5b7a396 1-7
+wrangler.jsonc
+  s_d98432f0516d90::t_4d9203aabc197c 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "aa930747959703f656d01895a4fde1db548f3210",
+  "prompts": {},
+  "sessions": {
+    "s_64b4bfcc2ab174": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fa79a53bcffe07VMSLALA47Fbs",
+        "model": "@cf/zai-org/glm-5.3"
+      },
+      "human_author": "gryczka <pgryczka@cloudflare.com>"
+    },
+    "s_d98432f0516d90": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fb2a065a7ffegvk1ocdl9QQ55S",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "gryczka <pgryczka@cloudflare.com>"
+    }
+  }
+}
