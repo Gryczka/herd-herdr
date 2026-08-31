@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Learn Herdr keyboard shortcuts by helping Moss the sheepdog manage a lively mountain farm." />
+		<meta name="theme-color" content="#1e3a32" />
+		<title>Herd Herdr: A Keyboard Adventure</title>
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="stylesheet" href="/styles.css" />
+		<script type="module" src="/game.js"></script>
+	</head>
+	<body>
+		<a class="skip-link" href="#mission">Skip to the current lesson</a>
+		<div class="paper-grain" aria-hidden="true"></div>
+
+		<main class="app-shell">
+			<header class="topbar">
+				<a class="brand" href="/" aria-label="Herd Herdr, a keyboard trail, home">
+					<svg class="brand-mark" viewBox="0 0 58 58" aria-hidden="true">
+						<path d="M8 36c0-13 9-23 21-23s21 10 21 23" fill="#93b64b" />
+						<path d="M13 40c1-9 6-14 14-14 7 0 12 5 13 14" fill="#f7f0d2" stroke="#17251f" stroke-width="3" />
+						<circle cx="19" cy="28" r="7" fill="#f7f0d2" stroke="#17251f" stroke-width="3" />
+						<circle cx="28" cy="25" r="8" fill="#f7f0d2" stroke="#17251f" stroke-width="3" />
+						<circle cx="36" cy="29" r="7" fill="#f7f0d2" stroke="#17251f" stroke-width="3" />
+						<path d="M38 31c7 0 10 4 10 9 0 6-5 9-11 9-7 0-11-4-11-9 0-6 5-9 12-9Z" fill="#27362f" stroke="#17251f" stroke-width="3" />
+						<circle cx="40" cy="38" r="1.8" fill="#fff7de" />
+						<path d="M45 32l7-4-2 8M31 33l-6-5 1 8" fill="#27362f" stroke="#17251f" stroke-width="3" stroke-linejoin="round" />
+					</svg>
+					<span class="brand-copy">
+						<strong>HERD HERDR</strong>
+						<small>A keyboard trail</small>
+					</span>
+				</a>
+
+				<div class="topbar-actions">
+					<span class="version-chip">HERDR 0.8.2</span>
+					<button class="utility-button" id="practice-button" type="button"><span aria-hidden="true">&#8635;</span> Practice mix</button>
+					<button class="utility-button" id="guide-button" type="button"><span aria-hidden="true">?</span> Field guide</button>
+					<button class="icon-button" id="sound-button" type="button" aria-label="Turn sound on" aria-pressed="false">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M4 10v4h4l5 4V6L8 10H4Zm13-1.5c1.2 1.1 1.2 5.9 0 7" />
+							<path class="sound-wave" d="M19.5 5.5c3.3 3.2 3.3 9.8 0 13" />
+						</svg>
+					</button>
+				</div>
+			</header>
+
+			<nav class="trail-panel" aria-label="Pasture lessons">
+				<div class="trail-heading">
+					<span>THE HIGH MEADOW TRAIL</span>
+					<strong id="trail-progress">Pasture 1 of 12</strong>
+				</div>
+				<div class="trail-track" id="trail-track"></div>
+			</nav>
+
+			<section class="game-layout">
+				<section class="field-card" aria-label="Animated farm game">
+					<div class="canvas-wrap">
+						<canvas
+							id="farm-canvas"
+							width="1000"
+							height="600"
+							role="img"
+							aria-label="A mountain pasture with Moss the sheepdog and a mixed herd."
+						></canvas>
+
+						<div class="field-hud field-hud-left" aria-label="Current score">
+							<div class="hud-item">
+								<span>WOOL</span>
+								<strong id="wool-score">0000</strong>
+							</div>
+							<div class="hud-rule"></div>
+							<div class="hud-item">
+								<span>CALM</span>
+								<strong id="calm-meter" aria-label="Three calm hearts">&#9829;&#9829;&#9829;</strong>
+							</div>
+						</div>
+
+						<div class="field-hud field-hud-right">
+							<span id="weather-label">MORNING / 14 C</span>
+						</div>
+
+						<div class="prefix-flare" id="prefix-flare" aria-hidden="true">
+							<span class="prefix-pulse"></span>
+							<small>PREFIX READY</small>
+							<strong>Now press <span id="prefix-next-key">C</span></strong>
+						</div>
+
+						<div class="scene-caption" id="scene-caption">
+							<span class="speaker-dot"></span>
+							<p><strong>MOSS</strong> Waiting by the lower gate.</p>
+						</div>
+					</div>
+					<div class="canvas-footer">
+						<span><i class="status-light"></i> HERD LINK ACTIVE</span>
+						<span>Keyboard and touch controls enabled</span>
+					</div>
+				</section>
+
+				<aside class="mission-card" id="mission" tabindex="-1">
+					<div class="mission-eyebrow">
+						<span id="chapter-number">PASTURE 01</span>
+						<span id="chapter-name">THE FOLD</span>
+					</div>
+					<h1 id="level-title">A Fresh Pen</h1>
+					<p class="mission-story" id="mission-story">
+						Three lambs arrived before breakfast. Give them a tab of their own before they taste the herb garden.
+					</p>
+
+					<div class="goal-card">
+						<span class="goal-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24"><path d="M5 20V5m14 15V5M5 9h14M5 15h14M9 5v15m6-15v15" /></svg>
+						</span>
+						<div>
+							<small>CURRENT JOB</small>
+							<strong id="mission-goal">Build a new pen for the lambs.</strong>
+						</div>
+					</div>
+
+					<section class="next-move" aria-labelledby="next-move-label">
+						<div class="section-label">
+							<span id="next-move-label">YOUR NEXT MOVE</span>
+							<strong id="command-name">NEW TAB</strong>
+						</div>
+						<div class="key-sequence" id="key-sequence" aria-label="Press Control B, then C"></div>
+						<p class="coach-note" id="coach-note">
+							Press the prefix, release it, then press the action key. Herdr sees the second key; your shell never does.
+						</p>
+					</section>
+
+					<div class="step-progress">
+						<div class="step-progress-copy">
+							<span>JOB PROGRESS</span>
+							<strong id="step-count">0 / 1</strong>
+						</div>
+						<div class="step-dots" id="step-dots"></div>
+					</div>
+
+					<section class="control-deck" aria-label="On-screen practice keyboard">
+						<div class="control-deck-heading">
+							<span>ON-SCREEN KEYS</span>
+							<small>Tap these if you do not have a keyboard</small>
+						</div>
+						<div class="virtual-keys">
+							<button class="key-button prefix-button" id="prefix-button" type="button" data-mode="prefix">
+								<span>CTRL</span><b>+</b><span>B</span>
+							</button>
+							<span class="then-arrow" aria-hidden="true">then</span>
+							<div class="action-keys" id="action-keys"></div>
+						</div>
+					</section>
+
+					<div class="mission-actions">
+						<button class="text-button" id="hint-button" type="button">Nudge me</button>
+						<button class="text-button" id="restart-level-button" type="button">Restart pasture</button>
+					</div>
+				</aside>
+			</section>
+
+			<section class="lower-rail" aria-label="Training summary">
+				<div class="rail-card rail-card-main">
+					<div class="rail-icon dog-icon" aria-hidden="true"></div>
+					<div>
+						<small>YOUR GUIDE</small>
+						<strong>Moss, border collie and pane specialist</strong>
+					</div>
+				</div>
+				<div class="rail-card">
+					<small>SHORTCUTS LEARNED</small>
+					<strong id="learned-count">0 / 24</strong>
+				</div>
+				<div class="rail-card">
+					<small>TRAIL STARS</small>
+					<strong id="star-count">0 / 36</strong>
+				</div>
+				<div class="rail-card rail-tip">
+					<small>FIELD NOTE</small>
+					<p id="field-note">The default Herdr prefix is <kbd>Ctrl+B</kbd>, just like tmux.</p>
+				</div>
+			</section>
+		</main>
+
+		<dialog class="game-dialog welcome-dialog" id="welcome-dialog">
+			<div class="dialog-landscape" aria-hidden="true">
+				<div class="sun-disc"></div>
+				<div class="hill hill-back"></div>
+				<div class="hill hill-front"></div>
+				<div class="mini-sheep sheep-one"><span></span></div>
+				<div class="mini-sheep sheep-two"><span></span></div>
+				<div class="mini-dog"><span></span></div>
+			</div>
+			<div class="dialog-body">
+				<span class="dialog-kicker">THE HIGH MEADOWS NEED YOU</span>
+				<h2>Ready to run with the herd?</h2>
+				<p>
+					Moss knows sheep. You teach him Herdr. Use real Herdr shortcuts to build pens, move between panes, rotate fields, and leave every
+					agent safe for the night.
+				</p>
+				<div class="prefix-demo" aria-label="Press Control B, release, then press an action key">
+					<kbd>Ctrl</kbd><span>+</span><kbd>B</kbd><i>release, then</i><kbd>action</kbd>
+				</div>
+				<div class="dialog-actions">
+					<button class="primary-button" id="start-button" type="button">Start the trail</button>
+					<button class="secondary-button" id="continue-button" type="button" hidden>Continue from pasture 1</button>
+				</div>
+				<small class="dialog-fineprint">No install required. Progress stays in this browser.</small>
+			</div>
+		</dialog>
+
+		<dialog class="game-dialog complete-dialog" id="complete-dialog">
+			<div class="complete-badge" aria-hidden="true">
+				<span>&#10003;</span>
+			</div>
+			<div class="dialog-body">
+				<span class="dialog-kicker" id="complete-kicker">PASTURE CLEARED</span>
+				<h2 id="complete-title">The lambs are tucked in.</h2>
+				<div class="earned-stars" id="earned-stars" aria-label="Three stars earned">&#9733;&#9733;&#9733;</div>
+				<p id="complete-copy">You built a new pen without rattling a single gate.</p>
+				<div class="learned-shortcut">
+					<small>SHORTCUT LEARNED</small>
+					<strong id="learned-shortcut">prefix+c</strong>
+				</div>
+				<div class="dialog-actions">
+					<button class="primary-button" id="next-level-button" type="button">Next pasture</button>
+					<button class="secondary-button" id="replay-level-button" type="button">Run it again</button>
+				</div>
+			</div>
+		</dialog>
+
+		<dialog class="guide-dialog" id="guide-dialog">
+			<div class="guide-header">
+				<div>
+					<span class="dialog-kicker">MOSS'S FIELD GUIDE</span>
+					<h2>Herdr shortcut map</h2>
+				</div>
+				<button class="dialog-close" id="guide-close-button" type="button" aria-label="Close field guide">&#215;</button>
+			</div>
+			<div class="guide-intro">
+				<p><strong>Prefix</strong> means press <kbd>Ctrl+B</kbd>, release it, then press the listed key.</p>
+				<button class="secondary-button compact" id="reset-progress-button" type="button">Reset trail progress</button>
+			</div>
+			<div class="guide-grid" id="guide-grid"></div>
+			<p class="guide-source">
+				Based on the Herdr 0.8.2 defaults. Your own bindings may differ; press <kbd>prefix+?</kbd> inside Herdr to see the active map.
+			</p>
+		</dialog>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+		<div class="sr-only" id="live-region" aria-live="assertive"></div>
+
+		<noscript>
+			<div class="noscript-message">Herd Herdr needs JavaScript to listen for shortcuts and animate the pasture.</div>
+		</noscript>
+	</body>
+</html>

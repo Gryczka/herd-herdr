@@ -1,0 +1,33 @@
+{
+	"name": "herd-herdr",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"description": "A pastoral browser game for learning Herdr keyboard shortcuts.",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"build": "npm run lint:fix && npm run lint && npm run build:raw",
+		"build:raw": "wrangler deploy --dry-run --outdir dist",
+		"check": "npm run lint && npm run test && npm run build",
+		"deploy": "npm run lint:fix && npm run lint && npm run deploy:raw",
+		"deploy:raw": "wrangler deploy",
+		"dev": "wrangler dev",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "eslint . --max-warnings=0 && prettier --check .",
+		"lint:fix": "eslint . --fix && prettier --write .",
+		"start": "wrangler dev",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.9.1",
+		"globals": "^17.11.0",
+		"prettier": "^3.9.6",
+		"vitest": "~4.1.0",
+		"wrangler": "^4.127.1"
+	}
+}
