@@ -9,11 +9,14 @@ import {
 	CAMPAIGN_LEVELS,
 	GUIDE_SECTIONS,
 	STORAGE_KEY,
+	TOTAL_SHORTCUTS,
 	countLearned,
 	countStars,
 	createDefaultProgress,
 	createPracticeLevel,
+	findNextLessonIndex,
 	inputMatches,
+	isCampaignComplete,
 	keyLabel,
 	normalizeKeyboardEvent,
 	readProgress,
@@ -26,6 +29,7 @@ const elements = {
 	canvas: getElement('farm-canvas'),
 	trailTrack: getElement('trail-track'),
 	trailProgress: getElement('trail-progress'),
+	lessonPicker: getElement('lesson-picker'),
 	woolScore: getElement('wool-score'),
 	calmMeter: getElement('calm-meter'),
 	weatherLabel: getElement('weather-label'),
@@ -39,11 +43,14 @@ const elements = {
 	missionGoal: getElement('mission-goal'),
 	commandName: getElement('command-name'),
 	keySequence: getElement('key-sequence'),
+	nameForm: getElement('name-form'),
+	nameInput: getElement('name-input'),
 	coachNote: getElement('coach-note'),
 	stepCount: getElement('step-count'),
 	stepDots: getElement('step-dots'),
 	prefixButton: getElement('prefix-button'),
 	actionKeys: getElement('action-keys'),
+	controlDeck: getElement('control-deck'),
 	learnedCount: getElement('learned-count'),
 	starCount: getElement('star-count'),
 	fieldNote: getElement('field-note'),
@@ -56,6 +63,7 @@ const elements = {
 	welcomeDialog: getElement('welcome-dialog'),
 	startButton: getElement('start-button'),
 	continueButton: getElement('continue-button'),
+	browseButton: getElement('browse-button'),
 	completeDialog: getElement('complete-dialog'),
 	completeKicker: getElement('complete-kicker'),
 	completeTitle: getElement('complete-title'),
@@ -76,6 +84,9 @@ const world = new FarmWorld(elements.canvas);
 let sound;
 let progress = readProgress(window.localStorage);
 let toastTimer = null;
+let stepTimer = null;
+let completionTimer = null;
+let levelRunId = 0;
 let state = {
 	level: CAMPAIGN_LEVELS[0],
 	levelIndex: 0,
@@ -85,6 +96,7 @@ let state = {
 	levelEarned: 0,
 	prefixArmed: false,
 	locked: false,
+	completionReady: false,
 	started: false,
 	practice: false,
 };
@@ -98,7 +110,9 @@ function init() {
 	const hasProgress = Object.keys(progress.completed).length > 0;
 	if (hasProgress) {
 		elements.continueButton.hidden = false;
-		elements.continueButton.textContent = `Continue from pasture ${progress.nextLevel + 1}`;
+		elements.continueButton.textContent = campaignComplete()
+			? 'Campaign complete: practice mix'
+			: `Continue: ${CAMPAIGN_LEVELS[progress.nextLevel].navLabel}`;
 	}
 
 	window.setTimeout(() => openDialog(elements.welcomeDialog), 180);
@@ -108,9 +122,12 @@ function bindEvents() {
 	document.addEventListener('keydown', handleKeyDown, { capture: true });
 	elements.prefixButton.addEventListener('click', armPrefix);
 	elements.startButton.addEventListener('click', () => startCampaign(0));
-	elements.continueButton.addEventListener('click', () => startCampaign(progress.nextLevel));
+	elements.continueButton.addEventListener('click', continueCampaign);
+	elements.browseButton.addEventListener('click', browseLessons);
+	elements.nameForm.addEventListener('submit', submitName);
+	elements.nameInput.addEventListener('input', () => world.setPromptValue(elements.nameInput.value));
 	elements.practiceButton.addEventListener('click', startPractice);
-	elements.guideButton.addEventListener('click', () => openDialog(elements.guideDialog));
+	elements.guideButton.addEventListener('click', openGuide);
 	elements.guideCloseButton.addEventListener('click', () => elements.guideDialog.close());
 	elements.soundButton.addEventListener('click', toggleSound);
 	elements.hintButton.addEventListener('click', showHint);
@@ -122,6 +139,38 @@ function bindEvents() {
 	elements.welcomeDialog.addEventListener('cancel', (event) => {
 		if (!state.started) event.preventDefault();
 	});
+}
+
+function browseLessons() {
+	startCampaign(progress.nextLevel);
+	window.requestAnimationFrame(() => {
+		elements.lessonPicker.scrollIntoView({ block: 'start' });
+		elements.lessonPicker.focus({ preventScroll: true });
+	});
+}
+
+function continueCampaign() {
+	if (campaignComplete()) startPractice();
+	else startCampaign(progress.nextLevel);
+}
+
+function campaignComplete() {
+	return isCampaignComplete(progress.completed);
+}
+
+function clearLevelTimers() {
+	window.clearTimeout(stepTimer);
+	window.clearTimeout(completionTimer);
+	stepTimer = null;
+	completionTimer = null;
+}
+
+function openGuide() {
+	if ((state.locked && !state.completionReady) || completionTimer !== null || elements.completeDialog.open) {
+		showToast('Finish the current result before opening the guide.', 'neutral');
+		return;
+	}
+	openDialog(elements.guideDialog);
 }
 
 function startCampaign(levelIndex) {
@@ -143,7 +192,10 @@ function startPractice() {
 }
 
 function loadLevel(level, levelIndex, practice) {
+	clearLevelTimers();
+	levelRunId += 1;
 	clearPrefix();
+	elements.nameForm.reset();
 	state = {
 		...state,
 		level,
@@ -154,14 +206,17 @@ function loadLevel(level, levelIndex, practice) {
 		levelEarned: 0,
 		prefixArmed: false,
 		locked: false,
+		completionReady: false,
 		practice,
 	};
 
 	world.setLevel(level);
+	world.setPromptValue('');
 	renderMission();
 	renderTrail();
 	renderStats();
 	setWeather(level.scene);
+	if (state.started) window.requestAnimationFrame(() => elements.mission.focus({ preventScroll: true }));
 }
 
 function renderMission() {
@@ -176,12 +231,24 @@ function renderMission() {
 	elements.fieldNote.textContent = level.note;
 	elements.prefixNextKey.textContent = keyLabel(step.key);
 	elements.stepCount.textContent = `${state.stepIndex} / ${level.steps.length}`;
+	const naming = step.mode === 'text';
+	elements.keySequence.hidden = naming;
+	elements.nameForm.hidden = !naming;
+	elements.controlDeck.hidden = naming;
 
-	renderSequence(step);
+	if (!naming) renderSequence(step);
 	renderStepDots();
 	renderActionKeys(step);
 
-	if (step.mode === 'prefix') {
+	if (naming) {
+		elements.nameInput.value = '';
+		elements.nameInput.placeholder = step.placeholder;
+		elements.nameInput.setAttribute('aria-label', `${step.command}. Suggested name: ${step.placeholder}`);
+		elements.coachNote.textContent = `${step.prompt} Type any name, then press Enter to save it.`;
+		elements.prefixButton.disabled = true;
+		elements.prefixButton.classList.remove('is-armed');
+		if (state.started) window.requestAnimationFrame(() => elements.nameInput.focus());
+	} else if (step.mode === 'prefix') {
 		elements.coachNote.textContent = `${step.prompt} Press Ctrl+B, release, then ${keyLabel(step.key)}.`;
 		elements.prefixButton.disabled = false;
 		elements.prefixButton.classList.toggle('is-armed', state.prefixArmed);
@@ -226,6 +293,7 @@ function renderStepDots() {
 
 function renderActionKeys(step) {
 	elements.actionKeys.replaceChildren();
+	if (step.mode === 'text') return;
 	const controls = [step.key, ...state.level.controls.filter((key) => key !== step.key)];
 	for (const key of controls) {
 		const button = document.createElement('button');
@@ -244,20 +312,26 @@ function renderTrail() {
 	elements.trailTrack.replaceChildren();
 	CAMPAIGN_LEVELS.forEach((level, index) => {
 		const result = progress.completed[level.id];
-		const unlocked = index < progress.unlocked;
 		const button = document.createElement('button');
 		button.type = 'button';
 		button.className = 'trail-stop';
-		button.disabled = !unlocked;
 		button.dataset.index = String(index);
-		button.setAttribute('aria-label', `${unlocked ? 'Open' : 'Locked'} pasture ${index + 1}: ${level.title}`);
-		button.title = unlocked ? level.title : `Complete pasture ${index} to unlock`;
+		button.setAttribute('aria-label', `Open lesson ${index + 1}: ${level.navLabel}`);
+		button.title = `Try ${level.title}`;
 		if (result) button.classList.add('is-complete');
-		if (!state.practice && state.levelIndex === index) button.classList.add('is-current');
-		if (!unlocked) button.classList.add('is-locked');
-		button.innerHTML = `<span>${result ? '&#10003;' : index + 1}</span>`;
+		if (!state.practice && state.levelIndex === index) {
+			button.classList.add('is-current');
+			button.setAttribute('aria-current', 'step');
+		}
+
+		const marker = document.createElement('span');
+		marker.className = 'trail-stop-marker';
+		marker.textContent = result ? '✓' : level.number;
+		const label = document.createElement('strong');
+		label.textContent = level.navLabel;
+		button.append(marker, label);
 		button.addEventListener('click', () => {
-			if (!unlocked || state.locked) return;
+			if (state.locked && !state.completionReady) return;
 			closeDialog(elements.completeDialog);
 			loadLevel(level, index, false);
 		});
@@ -266,7 +340,7 @@ function renderTrail() {
 
 	elements.trailProgress.textContent = state.practice
 		? 'Open range practice'
-		: `Pasture ${state.levelIndex + 1} of ${CAMPAIGN_LEVELS.length}`;
+		: `Lesson ${state.levelIndex + 1} of ${CAMPAIGN_LEVELS.length}`;
 }
 
 function renderStats() {
@@ -275,7 +349,7 @@ function renderStats() {
 	elements.calmMeter.textContent = `${'♥'.repeat(calm)}${'♡'.repeat(3 - calm)}`;
 	elements.calmMeter.setAttribute('aria-label', `${calm} of 3 calm hearts remaining`);
 	elements.calmMeter.classList.toggle('is-low', calm <= 1);
-	elements.learnedCount.textContent = `${countLearned(progress.completed)} / 24`;
+	elements.learnedCount.textContent = `${countLearned(progress.completed)} / ${TOTAL_SHORTCUTS}`;
 	elements.starCount.textContent = `${countStars(progress.completed)} / 36`;
 }
 
@@ -304,6 +378,7 @@ function renderGuide() {
 function handleKeyDown(event) {
 	if (!state.started || state.locked || elements.welcomeDialog.open || elements.completeDialog.open || elements.guideDialog.open) return;
 	if (event.repeat) return;
+	if (event.target instanceof HTMLInputElement) return;
 	if (event.target instanceof HTMLButtonElement && (event.key === 'Enter' || event.key === ' ')) return;
 
 	const input = normalizeKeyboardEvent(event);
@@ -335,7 +410,8 @@ function handleKeyDown(event) {
 
 function armPrefix() {
 	if (state.locked || state.level.steps[state.stepIndex]?.mode !== 'prefix') {
-		showToast('This step uses a direct key: no prefix.', 'neutral');
+		const naming = state.level.steps[state.stepIndex]?.mode === 'text';
+		showToast(naming ? 'Name this item in the text field.' : 'This step uses a direct key: no prefix.', 'neutral');
 		return;
 	}
 
@@ -379,20 +455,23 @@ function handleInput(input) {
 	else handleWrong(`Expected ${shortcutLabel(step)}.`);
 }
 
-function handleCorrect(step) {
+function handleCorrect(step, value = '') {
+	const runId = levelRunId;
 	state.locked = true;
 	state.streak += 1;
 	const points = 70 + Math.min(5, state.streak) * 10;
 	state.levelEarned += points;
 	progress.wool += points;
 	state.stepIndex += 1;
-	world.applyAction(step.action);
+	world.applyAction(step.action, value);
 	sound.correct(state.streak);
 	renderStats();
 	showToast(`${step.command}  +${points} wool`, 'success');
 	elements.liveRegion.textContent = `${step.command} correct. ${state.stepIndex} of ${state.level.steps.length} complete.`;
 
-	window.setTimeout(() => {
+	stepTimer = window.setTimeout(() => {
+		if (runId !== levelRunId) return;
+		stepTimer = null;
 		if (state.stepIndex >= state.level.steps.length) {
 			completeLevel();
 			return;
@@ -400,6 +479,21 @@ function handleCorrect(step) {
 		state.locked = false;
 		renderMission();
 	}, 620);
+}
+
+function submitName(event) {
+	event.preventDefault();
+	const step = state.level.steps[state.stepIndex];
+	if (state.locked || step?.mode !== 'text') return;
+
+	const value = elements.nameInput.value.trim();
+	if (!value) {
+		showToast('Enter a name before saving.', 'error');
+		elements.nameInput.focus();
+		return;
+	}
+
+	handleCorrect(step, value);
 }
 
 function handleWrong(message) {
@@ -431,17 +525,15 @@ function completeLevel() {
 			bestMistakes: Math.min(state.mistakes, previous?.bestMistakes ?? Number.POSITIVE_INFINITY),
 		};
 		progress.unlocked = Math.max(progress.unlocked, Math.min(CAMPAIGN_LEVELS.length, state.levelIndex + 2));
-		progress.nextLevel = Math.min(CAMPAIGN_LEVELS.length - 1, state.levelIndex + 1);
+		progress.nextLevel = findNextLessonIndex(progress.completed, state.levelIndex);
 	}
 	writeProgress(window.localStorage, progress);
 	renderTrail();
 	renderStats();
+	state.completionReady = true;
+	const finishedCampaign = !state.practice && campaignComplete();
 
-	elements.completeKicker.textContent = state.practice
-		? 'PRACTICE RUN COMPLETE'
-		: state.levelIndex === CAMPAIGN_LEVELS.length - 1
-			? 'TRAIL COMPLETE'
-			: 'PASTURE CLEARED';
+	elements.completeKicker.textContent = state.practice ? 'PRACTICE RUN COMPLETE' : finishedCampaign ? 'TRAIL COMPLETE' : 'LESSON CLEARED';
 	elements.completeTitle.textContent = level.reward;
 	elements.completeCopy.textContent = `${level.complete} You earned ${state.levelEarned} wool with ${state.mistakes} ${state.mistakes === 1 ? 'wobble' : 'wobbles'}.`;
 	elements.earnedStars.textContent = `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`;
@@ -453,20 +545,25 @@ function completeLevel() {
 			: 'Full trail mix';
 	elements.nextLevelButton.textContent = state.practice
 		? 'Shuffle another mix'
-		: state.levelIndex === CAMPAIGN_LEVELS.length - 1
+		: finishedCampaign
 			? 'Open practice range'
-			: 'Next pasture';
+			: 'Next open lesson';
 
-	window.setTimeout(() => openDialog(elements.completeDialog), 700);
+	const runId = levelRunId;
+	completionTimer = window.setTimeout(() => {
+		if (runId !== levelRunId) return;
+		completionTimer = null;
+		openDialog(elements.completeDialog);
+	}, 700);
 }
 
 function advanceLevel() {
 	closeDialog(elements.completeDialog);
-	if (state.practice || state.levelIndex === CAMPAIGN_LEVELS.length - 1) {
+	if (state.practice || campaignComplete()) {
 		startPractice();
 		return;
 	}
-	loadLevel(CAMPAIGN_LEVELS[state.levelIndex + 1], state.levelIndex + 1, false);
+	loadLevel(CAMPAIGN_LEVELS[progress.nextLevel], progress.nextLevel, false);
 }
 
 function restartLevel() {
@@ -481,6 +578,12 @@ function restartLevel() {
 function showHint() {
 	const step = state.level.steps[state.stepIndex];
 	if (!step) return;
+	if (step.mode === 'text') {
+		elements.coachNote.textContent = `${step.prompt} Try “${step.placeholder}”, or choose your own short name, then press Enter.`;
+		elements.nameInput.focus();
+		showToast('Names can be changed again later.', 'neutral');
+		return;
+	}
 	elements.coachNote.textContent =
 		step.mode === 'prefix'
 			? `${step.prompt} Hold Ctrl and tap B. Release both, then tap ${keyLabel(step.key)}.`
@@ -491,13 +594,13 @@ function showHint() {
 }
 
 function resetProgress() {
-	if (!window.confirm('Reset every pasture, star, and wool point?')) return;
+	if (!window.confirm('Reset every lesson, star, and wool point?')) return;
 	window.localStorage.removeItem(STORAGE_KEY);
 	progress = createDefaultProgress();
 	state.started = true;
 	closeDialog(elements.guideDialog);
 	loadLevel(CAMPAIGN_LEVELS[0], 0, false);
-	showToast('Trail reset. Moss is back at the first gate.', 'neutral');
+	showToast('Lessons reset. Moss is back at the first gate.', 'neutral');
 }
 
 function toggleSound() {

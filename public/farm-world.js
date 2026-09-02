@@ -59,8 +59,8 @@ export class FarmWorld {
 
 	createSceneState() {
 		return {
-			newPen: 0,
-			newPenTarget: 0,
+			newTab: 0,
+			newTabTarget: 0,
 			verticalFence: 0,
 			verticalFenceTarget: 0,
 			horizontalFence: 0,
@@ -76,6 +76,14 @@ export class FarmWorld {
 			map: 0,
 			mapTarget: 0,
 			mapSelection: 0,
+			activeWorkspace: 0,
+			workspaceNames: ['HOME FOLD', 'NORTH RIDGE'],
+			tabNames: ['AGENTS'],
+			prompt: 0,
+			promptTarget: 0,
+			promptKind: 'name',
+			promptTitle: '',
+			promptValue: '',
 			help: 0,
 			helpTarget: 0,
 			closed: 0,
@@ -111,15 +119,34 @@ export class FarmWorld {
 		this.hoveredAnimal = null;
 		this.dog = { x: 420, y: 410, tx: 420, ty: 410, phase: 0, happy: 0 };
 
-		if (['patrol', 'finale', 'practice'].includes(level.scene)) {
+		if (['patrol', 'practice'].includes(level.scene)) {
 			this.state.verticalFence = 1;
 			this.state.verticalFenceTarget = 1;
 			this.state.horizontalFence = 1;
 			this.state.horizontalFenceTarget = 1;
 		}
-		if (level.scene === 'swap') {
+		if (['swap', 'zoom', 'close'].includes(level.scene)) {
 			this.state.verticalFence = 1;
 			this.state.verticalFenceTarget = 1;
+		}
+		if (level.scene === 'patrol') {
+			this.dog = { x: 300, y: 330, tx: 300, ty: 330, phase: 0, happy: 0 };
+		}
+		if (level.scene === 'zoom') {
+			this.dog = { x: 700, y: 390, tx: 700, ty: 390, phase: 0, happy: 0 };
+		}
+		const sceneTabs = {
+			tabs: ['AGENTS', 'LOGS', 'CLOVER'],
+			numbered: ['SHEEP', 'GOATS', 'RIDGE'],
+			practice: ['AGENTS', 'LOGS', 'SHELL'],
+			finale: ['HOME', 'RIDGE', 'BARN'],
+			close: ['AGENTS', 'EMPTY'],
+		};
+		this.state.tabNames = [...(sceneTabs[level.scene] ?? ['AGENTS'])];
+		if (level.scene === 'close') {
+			this.state.workspaceNames = ['HOME FOLD', 'QUARANTINE'];
+			this.state.activeWorkspace = 1;
+			this.state.activePasture = 1;
 		}
 		if (level.scene === 'night') {
 			this.state.night = 0.18;
@@ -146,19 +173,32 @@ export class FarmWorld {
 		if (armed) this.dog.happy = 1;
 	}
 
+	/** Mirror the browser naming field in the canvas prompt. */
+	setPromptValue(value) {
+		this.state.promptValue = value;
+	}
+
 	/**
 	 * Translate a completed shortcut action into scene state and dialogue.
 	 *
 	 * @param {string} action - Action identifier from the current campaign step.
+	 * @param {string} [value] - Optional name entered for a tab or workspace.
 	 * @returns {void}
 	 */
-	applyAction(action) {
+	applyAction(action, value = '') {
 		this.state.flash = 1;
 		this.dog.happy = 1;
 
 		switch (action) {
-			case 'new-tab':
-				this.state.newPenTarget = 1;
+			case 'new-tab-prompt':
+				this.openPrompt('NEW TAB', 'name');
+				this.emitCaption('MOSS', 'Herdr asks for a tab name before creating it.');
+				break;
+			case 'create-named-tab':
+				this.state.tabNames.push(displayName(value, 'NEW TAB'));
+				this.state.activePasture = this.state.tabNames.length - 1;
+				this.state.newTabTarget = 1;
+				this.state.promptTarget = 0;
 				this.moveAnimals(
 					(animal) => animal.type === 'sheep',
 					[
@@ -168,7 +208,14 @@ export class FarmWorld {
 						[710, 470],
 					],
 				);
-				this.emitCaption('CLOVER', 'Room for all three of us. That is luxury.');
+				this.emitCaption('CLOVER', `${displayName(value, 'New tab')} is ours. No pane was split.`);
+				break;
+			case 'new-tab':
+				this.state.tabNames.push('SCRATCH');
+				this.state.activePasture = this.state.tabNames.length - 1;
+				this.state.newTab = 1;
+				this.state.newTabTarget = 1;
+				this.emitCaption('MOSS', 'A new scratch tab joined this workspace.');
 				break;
 			case 'split-right':
 				this.state.verticalFenceTarget = 1;
@@ -207,12 +254,12 @@ export class FarmWorld {
 				this.moveDog(0, 1);
 				break;
 			case 'next-tab':
-				this.state.activePasture = (this.state.activePasture + 1) % 3;
+				this.state.activePasture = (this.state.activePasture + 1) % this.state.tabNames.length;
 				this.rotatePasture();
 				this.emitCaption('MOSS', `Pasture tab ${this.state.activePasture + 1}. Fresh tracks here.`);
 				break;
 			case 'previous-tab':
-				this.state.activePasture = (this.state.activePasture + 2) % 3;
+				this.state.activePasture = (this.state.activePasture - 1 + this.state.tabNames.length) % this.state.tabNames.length;
 				this.rotatePasture();
 				this.emitCaption('MOSS', `Back to pasture tab ${this.state.activePasture + 1}.`);
 				break;
@@ -221,12 +268,22 @@ export class FarmWorld {
 			case 'jump-3': {
 				const pen = Number(action.slice(-1)) - 1;
 				this.state.activePen = pen;
+				this.state.activePasture = pen;
 				this.dog.tx = [275, 500, 725][pen];
 				this.dog.ty = 430;
 				this.bouncePen(pen);
-				this.emitCaption('MOSS', `Straight to numbered pen ${pen + 1}. No fence-line detour.`);
+				this.emitCaption('MOSS', `Straight to tab ${pen + 1}. No cycling required.`);
 				break;
 			}
+			case 'rename-tab-prompt':
+				this.openPrompt('RENAME TAB', 'name', this.state.tabNames[this.state.activePasture]);
+				this.emitCaption('MOSS', 'The active tab name is ready to edit.');
+				break;
+			case 'rename-tab':
+				this.state.tabNames[this.state.activePasture] = displayName(value, 'TAB');
+				this.state.promptTarget = 0;
+				this.emitCaption('MOSS', `Active tab renamed ${displayName(value, 'Tab')}.`);
+				break;
 			case 'zoom-in':
 				this.state.zoomTarget = 1.38;
 				this.emitCaption('MOSS', 'That rail pin is nearly out. Good catch.');
@@ -256,28 +313,50 @@ export class FarmWorld {
 				this.burst(700, 330, 22, 'paper');
 				this.emitCaption('LEDGER', 'Three lines copied. The co-op will be delighted.');
 				break;
+			case 'new-workspace':
+				this.state.workspaceNames.splice(1, 0, 'WORKSPACE 2');
+				this.state.activeWorkspace = 1;
+				this.state.mapSelection = 1;
+				this.emitCaption('MOSS', 'New workspace created with a generated name. It joined the Spaces list.');
+				break;
+			case 'rename-workspace-prompt':
+				this.openPrompt('RENAME WORKSPACE', 'name', this.state.workspaceNames[this.state.activeWorkspace]);
+				this.emitCaption('MOSS', 'The selected workspace name is ready to edit.');
+				break;
+			case 'rename-workspace':
+				this.state.workspaceNames[this.state.activeWorkspace] = displayName(value, 'WORKSPACE');
+				this.state.promptTarget = 0;
+				this.emitCaption('MOSS', `${displayName(value, 'Workspace')} now has its own Space row.`);
+				break;
 			case 'toggle-sidebar':
 				this.state.mapTarget = this.state.mapTarget > 0.5 ? 0 : 1;
-				this.emitCaption('MOSS', 'The sidebar sees every field and every agent.');
+				this.emitCaption(
+					'MOSS',
+					this.state.mapTarget ? 'The sidebar sees every Space and agent.' : 'Sidebar collapsed. The workspace is still active.',
+				);
 				break;
 			case 'workspace-nav':
 				this.state.mapTarget = 1;
-				this.state.mapSelection = 0;
-				this.emitCaption('MOSS', 'Navigate mode ready. Plain j and k move the highlight.');
+				this.state.mapSelection = this.state.activeWorkspace;
+				this.emitCaption('MOSS', 'Navigate mode ready. Up and Down move between workspaces.');
 				break;
 			case 'nav-down':
-				this.state.mapSelection = Math.min(2, this.state.mapSelection + 1);
+				this.state.mapSelection = Math.min(this.state.workspaceNames.length - 1, this.state.mapSelection + 1);
 				break;
 			case 'nav-confirm':
-				this.state.activePasture = this.state.mapSelection;
+				this.state.activeWorkspace = this.state.mapSelection;
 				this.state.mapTarget = 0;
-				this.rotatePasture();
-				this.emitCaption('BUTTON', 'You found my workspace. Entirely intentional.');
+				this.emitCaption('BUTTON', `${this.state.workspaceNames[this.state.activeWorkspace]} opened. Entirely intentional.`);
 				break;
 			case 'goto-picker':
 				this.state.mapTarget = 1;
-				this.state.mapSelection = 2;
+				this.state.mapSelection = this.state.activeWorkspace;
 				this.emitCaption('MOSS', 'Goto searches workspaces, tabs, panes, and agents.');
+				break;
+			case 'close-picker':
+			case 'nav-cancel':
+				this.state.mapTarget = 0;
+				this.emitCaption('MOSS', 'Back in terminal mode.');
 				break;
 			case 'key-help':
 				this.state.helpTarget = 1;
@@ -292,10 +371,17 @@ export class FarmWorld {
 				break;
 			case 'close-tab':
 				this.state.closedTarget = 2;
+				this.state.activePasture = 0;
 				this.emitCaption('MOSS', 'Temporary tab closed.');
 				break;
-			case 'close-workspace':
+			case 'close-workspace-prompt':
+				this.openPrompt('CLOSE WORKSPACE?', 'confirm', this.state.workspaceNames[this.state.activeWorkspace]);
+				this.emitCaption('MOSS', 'Herdr confirms before closing a workspace by default.');
+				break;
+			case 'confirm-close-workspace':
+				this.state.promptTarget = 0;
 				this.state.closedTarget = 3;
+				this.state.activeWorkspace = 0;
 				this.emitCaption('MOSS', 'Quarantine workspace packed away.');
 				break;
 			case 'detach':
@@ -309,6 +395,13 @@ export class FarmWorld {
 		}
 
 		this.celebrate();
+	}
+
+	openPrompt(title, kind, value = '') {
+		this.state.promptTitle = title;
+		this.state.promptKind = kind;
+		this.state.promptValue = value;
+		this.state.promptTarget = 1;
 	}
 
 	/** Trigger restrained visual feedback for an incorrect shortcut. */
@@ -358,9 +451,10 @@ export class FarmWorld {
 	rotatePasture() {
 		const offsets = [0, 38, -28];
 		const vertical = [0, -22, 18];
+		const index = this.state.activePasture % offsets.length;
 		for (const animal of this.animals) {
-			animal.tx = clamp(animal.homeX + offsets[this.state.activePasture], 170, 835);
-			animal.ty = clamp(animal.homeY + vertical[this.state.activePasture], 285, 500);
+			animal.tx = clamp(animal.homeX + offsets[index], 170, 835);
+			animal.ty = clamp(animal.homeY + vertical[index], 285, 500);
 		}
 	}
 
@@ -437,13 +531,14 @@ export class FarmWorld {
 		const ease = Math.min(1, delta * speed);
 		// Every scene property eases toward a target so actions can interrupt cleanly.
 		const animatedKeys = [
-			'newPen',
+			'newTab',
 			'verticalFence',
 			'horizontalFence',
 			'zoom',
 			'ledger',
 			'selection',
 			'map',
+			'prompt',
 			'help',
 			'closed',
 			'night',
@@ -502,10 +597,12 @@ export class FarmWorld {
 		this.drawParticles(ctx);
 		ctx.restore();
 
+		this.drawHierarchy(ctx);
 		this.drawWeather(ctx, elapsed);
 		this.drawLedger(ctx);
 		this.drawMap(ctx);
 		this.drawHelp(ctx);
+		this.drawPrompt(ctx);
 		this.drawFlash(ctx);
 	}
 
@@ -687,12 +784,85 @@ export class FarmWorld {
 		ctx.restore();
 	}
 
+	drawHierarchy(ctx) {
+		const scene = this.level?.scene;
+		if (!scene) return;
+
+		const x = 120;
+		const y = 197;
+		const width = 760;
+		const workspaceWidth = 218;
+		ctx.save();
+		ctx.fillStyle = 'rgba(14, 29, 24, 0.25)';
+		roundedRect(ctx, x + 5, y + 6, width, 51, 12);
+		ctx.fill();
+		ctx.fillStyle = '#1d312a';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 3;
+		roundedRect(ctx, x, y, width, 51, 12);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = '#9fc16e';
+		ctx.font = '800 8px ui-monospace, monospace';
+		ctx.textAlign = 'left';
+		ctx.fillText('SPACE · WORKSPACE', x + 14, y + 16);
+		ctx.fillStyle = COLORS.cream;
+		ctx.font = '800 13px ui-monospace, monospace';
+		const workspace = this.state.workspaceNames[this.state.activeWorkspace] ?? 'HOME FOLD';
+		ctx.fillText(workspace.slice(0, 21), x + 14, y + 37);
+
+		ctx.strokeStyle = '#65806e';
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(x + workspaceWidth, y + 8);
+		ctx.lineTo(x + workspaceWidth, y + 43);
+		ctx.stroke();
+
+		const tabs = this.state.tabNames;
+		const gap = 6;
+		const tabsX = x + workspaceWidth + 10;
+		const available = width - workspaceWidth - 20;
+		const tabWidth = Math.min(128, (available - gap * Math.max(0, tabs.length - 1)) / Math.max(1, tabs.length));
+		for (let index = 0; index < tabs.length; index += 1) {
+			let alpha = 1;
+			if (['build', 'finale'].includes(scene) && index === tabs.length - 1 && tabs.length > (scene === 'finale' ? 3 : 1)) {
+				alpha = this.state.newTab;
+			}
+			if (scene === 'close' && index === 1) alpha *= 1 - clamp(this.state.closed - 1, 0, 1);
+			if (alpha < 0.01) continue;
+
+			const tabX = tabsX + index * (tabWidth + gap);
+			const active = index === this.state.activePasture;
+			ctx.save();
+			ctx.globalAlpha = alpha;
+			ctx.translate(0, (1 - alpha) * 8);
+			ctx.fillStyle = active ? '#f1d268' : '#f6edcf';
+			ctx.strokeStyle = active ? COLORS.coral : '#0d1915';
+			ctx.lineWidth = active ? 3 : 2;
+			roundedRect(ctx, tabX, y + 9, tabWidth, 33, 7);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.font = '800 10px ui-monospace, monospace';
+			ctx.textAlign = 'left';
+			ctx.fillText(`${index + 1}  ${tabs[index].slice(0, 11)}`, tabX + 9, y + 30);
+			ctx.restore();
+		}
+
+		ctx.fillStyle = 'rgba(23, 37, 31, 0.72)';
+		ctx.font = '800 8px ui-monospace, monospace';
+		ctx.textAlign = 'right';
+		ctx.fillText('ACTIVE TAB · PANE LAYOUT BELOW', 878, 267);
+		ctx.restore();
+	}
+
 	drawPenHighlights(ctx) {
 		const scene = this.level?.scene;
 		if (scene === 'numbered') {
-			const x = [145, 380, 615][this.state.activePen];
-			ctx.fillStyle = 'rgba(255, 232, 133, 0.26)';
-			roundedRect(ctx, x, 255, 235, 272, 18);
+			const colors = ['rgba(255,228,126,.18)', 'rgba(108,189,165,.2)', 'rgba(227,133,116,.16)'];
+			ctx.fillStyle = colors[this.state.activePen];
+			roundedRect(ctx, 120, 248, 760, 280, 24);
 			ctx.fill();
 		}
 		if (scene === 'tabs') {
@@ -707,61 +877,26 @@ export class FarmWorld {
 		const scene = this.level?.scene;
 		if (!scene) return;
 
-		if (scene === 'range') {
-			for (let index = 0; index < 3; index += 1) {
-				const x = 155 + index * 250;
-				this.drawFenceRect(ctx, x, 285, 205, 205, 1);
-				this.drawSign(ctx, x + 102, 270, ['HOME', 'BRAMBLE', 'RIDGE'][index], index + 1);
-			}
-			return;
-		}
-
 		if (scene === 'close') {
 			this.drawFenceRect(ctx, 120, 248, 760, 280, 1);
 			const paneAlpha = Math.max(0, 1 - this.state.closed);
-			const tabAlpha = Math.max(0, 1 - Math.max(0, this.state.closed - 1));
-			const workspaceAlpha = Math.max(0, 1 - Math.max(0, this.state.closed - 2));
 			ctx.save();
 			ctx.globalAlpha = paneAlpha;
-			this.drawFenceRect(ctx, 620, 300, 205, 175, 1);
-			ctx.restore();
-			ctx.save();
-			ctx.globalAlpha = tabAlpha;
-			this.drawSign(ctx, 720, 285, 'EMPTY TAB', 2);
-			ctx.restore();
-			ctx.save();
-			ctx.globalAlpha = workspaceAlpha;
-			this.drawSign(ctx, 490, 232, 'QUARANTINE', 0);
+			this.drawFenceLine(ctx, 500, 248, 500, 528, 1);
 			ctx.restore();
 			return;
 		}
 
 		this.drawFenceRect(ctx, 120, 248, 760, 280, 1);
 
-		if (scene === 'build') {
-			this.drawFenceLine(ctx, 585, 248, 585, 528, this.state.newPen);
-			this.drawSign(ctx, 735, 238, this.state.newPen > 0.75 ? 'LAMB TAB' : 'NEW TAB', 0, this.state.newPen);
-		}
-
-		if (['split', 'patrol', 'swap', 'finale', 'practice'].includes(scene)) {
+		if (['split', 'patrol', 'swap', 'finale', 'practice', 'zoom'].includes(scene)) {
 			this.drawFenceLine(ctx, 500, 248, 500, 528, this.state.verticalFence);
 		}
-		if (['split', 'patrol', 'finale', 'practice'].includes(scene)) {
+		if (scene === 'split') {
+			this.drawFenceLine(ctx, 500, 390, 880, 390, this.state.horizontalFence);
+		}
+		if (['patrol', 'practice'].includes(scene)) {
 			this.drawFenceLine(ctx, 120, 390, 880, 390, this.state.horizontalFence);
-		}
-
-		if (scene === 'tabs') {
-			for (let index = 0; index < 3; index += 1) {
-				this.drawSign(ctx, 280 + index * 220, 238, `TAB ${index + 1}`, index + 1, 1, index === this.state.activePasture);
-			}
-		}
-
-		if (scene === 'numbered') {
-			this.drawFenceLine(ctx, 380, 248, 380, 528, 1);
-			this.drawFenceLine(ctx, 615, 248, 615, 528, 1);
-			for (let index = 0; index < 3; index += 1) {
-				this.drawSign(ctx, 262 + index * 235, 238, `PEN ${index + 1}`, index + 1, 1, index === this.state.activePen);
-			}
 		}
 
 		if (scene === 'zoom') {
@@ -1287,12 +1422,9 @@ export class FarmWorld {
 		ctx.stroke();
 		ctx.fillStyle = '#a9ca74';
 		ctx.font = '800 12px ui-monospace, monospace';
-		ctx.fillText('SPACES', 24, 34);
-		const fields = [
-			['HOME FOLD', '3 agents'],
-			['BRAMBLE HILL', 'Button · blocked'],
-			['NORTH RIDGE', '2 agents'],
-		];
+		ctx.fillText('SPACES · WORKSPACES', 24, 34);
+		const details = ['3 agents', '1 agent', 'Button · blocked'];
+		const fields = this.state.workspaceNames.map((name, index) => [name, details[index] ?? '1 pane']);
 		for (let index = 0; index < fields.length; index += 1) {
 			const y = 58 + index * 92;
 			if (this.state.mapSelection === index) {
@@ -1309,7 +1441,7 @@ export class FarmWorld {
 		}
 		ctx.fillStyle = '#718b78';
 		ctx.font = '600 11px ui-monospace, monospace';
-		ctx.fillText('j/k move   enter open', 25, 382);
+		ctx.fillText('↑/↓ move   enter open', 25, 382);
 		ctx.restore();
 	}
 
@@ -1333,10 +1465,54 @@ export class FarmWorld {
 		ctx.font = '700 14px ui-monospace, monospace';
 		ctx.fillText('c new tab    v split right    - split down', 0, -47);
 		ctx.fillText('h/j/k/l focus panes    z zoom    x close', 0, -10);
-		ctx.fillText('n/p tabs    w spaces    g goto    q detach', 0, 27);
+		ctx.fillText('n/p tabs    W rename space    T rename tab', 0, 27);
 		ctx.fillStyle = '#608044';
 		ctx.font = '700 12px ui-monospace, monospace';
-		ctx.fillText('/ filters this list inside Herdr', 0, 86);
+		ctx.fillText('w spaces   g goto   q detach   / filter', 0, 86);
+		ctx.restore();
+	}
+
+	drawPrompt(ctx) {
+		const amount = this.state.prompt;
+		if (amount < 0.02) return;
+
+		ctx.save();
+		ctx.globalAlpha = amount;
+		ctx.translate(500, 330 + (1 - easeOut(amount)) * 24);
+		ctx.fillStyle = 'rgba(17, 29, 24, 0.28)';
+		roundedRect(ctx, -218, -92, 448, 196, 17);
+		ctx.fill();
+		ctx.fillStyle = '#233a31';
+		ctx.strokeStyle = '#101c18';
+		ctx.lineWidth = 5;
+		roundedRect(ctx, -230, -104, 448, 196, 17);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = '#a9ca74';
+		ctx.font = '800 12px ui-monospace, monospace';
+		ctx.textAlign = 'left';
+		ctx.fillText(this.state.promptTitle, -198, -66);
+
+		if (this.state.promptKind === 'confirm') {
+			ctx.fillStyle = '#f8efd4';
+			ctx.font = '800 18px Georgia, serif';
+			ctx.fillText(`Close ${this.state.promptValue || 'this workspace'}?`, -198, -24);
+			ctx.fillStyle = '#9bb49f';
+			ctx.font = '600 12px ui-monospace, monospace';
+			ctx.fillText('Enter confirms this workspace close', -198, 43);
+		} else {
+			ctx.fillStyle = '#f8efd4';
+			roundedRect(ctx, -200, -42, 388, 52, 8);
+			ctx.fill();
+			ctx.fillStyle = COLORS.ink;
+			ctx.font = '700 16px ui-monospace, monospace';
+			const input = this.state.promptValue || 'type a name…';
+			ctx.fillText(input.slice(0, 28), -182, -10);
+			ctx.fillStyle = '#9bb49f';
+			ctx.font = '600 12px ui-monospace, monospace';
+			ctx.fillText('Enter saves the name', -198, 55);
+		}
 		ctx.restore();
 	}
 
@@ -1424,11 +1600,11 @@ function createClouds() {
 
 function captionForScene(scene) {
 	const captions = {
-		build: 'Three lambs, one herb garden, and not a fence between them.',
+		build: 'One workspace, one tab, one pane. Add a tab without splitting it.',
 		split: 'Sheep feed on the left. Goat negotiations on the right.',
 		patrol: 'I go where focus goes. Give me a Vim direction.',
 		tabs: 'Three pasture tabs. Only one has untouched clover.',
-		numbered: 'I can smell pen 3 from here, but a shortcut is faster.',
+		numbered: 'I can smell tab 3 from here, but a shortcut is faster.',
 		zoom: 'Something is loose on that north rail.',
 		swap: 'Move the pane, not the animals inside it.',
 		ledger: 'The tally is in pane history. We only need three lines.',
@@ -1443,16 +1619,16 @@ function captionForScene(scene) {
 
 function sceneDescription(scene) {
 	const descriptions = {
-		build: 'Three lambs wait beside an unfinished pen in a bright mountain pasture.',
-		split: 'Sheep and goats share a large pen that needs two dividing fences.',
+		build: 'A workspace bar shows one tab and one pane while three lambs wait for a newly named tab.',
+		split: 'One active tab contains a pane layout ready to split right and then down.',
 		patrol: 'Four fenced panes form a grid with Moss the sheepdog in the upper-left pen.',
-		tabs: 'A green pasture with three wooden tab signs above the herd.',
-		numbered: 'Three side-by-side pens numbered one, two, and three.',
-		zoom: 'A pasture fence has a highlighted loose rail near the north edge.',
+		tabs: 'A workspace bar shows three tabs above one active pane layout.',
+		numbered: 'Three numbered tabs share one workspace, with one active tab at a time.',
+		zoom: 'One tab contains two panes and a highlighted loose rail in the focused pane.',
 		swap: 'Two flocks stand in side-by-side panes ready to exchange positions.',
 		ledger: 'A flock beside a crate where the wool ledger will open.',
-		range: 'Three separate fields named Home, Bramble, and Ridge.',
-		close: 'An occupied field beside an empty temporary quarantine area.',
+		range: 'A workspace and tab bar sits above one pane layout; the Spaces sidebar can slide in from the left.',
+		close: 'A Quarantine workspace contains an empty tab with a split pane ready to close.',
 		night: 'A quiet evening pasture where the herd is preparing to sleep.',
 		finale: 'A divided pasture beneath a gathering rainstorm.',
 		practice: 'A divided open-range practice pasture with a mixed herd.',
@@ -1482,6 +1658,10 @@ function easeOut(value) {
 
 function clamp(value, min, max) {
 	return Math.max(min, Math.min(max, value));
+}
+
+function displayName(value, fallback) {
+	return (value.trim() || fallback).slice(0, 24).toUpperCase();
 }
 
 function mixColor(from, to, amount) {

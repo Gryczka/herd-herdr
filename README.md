@@ -44,8 +44,9 @@ Cloudflare Workers serves the dependency-free application as static assets. In t
 
 ## Features
 
-- Twelve progressive campaign pastures based on Herdr 0.8.2 defaults
+- Twelve freely selectable feature lessons based on Herdr 0.8.2 defaults
 - Real `Ctrl+B` prefix practice for tabs, panes, workspaces, navigation, and session actions
+- Interactive tab and workspace naming prompts that mirror Herdr's default flow
 - Randomized mixed-practice runs after the campaign
 - Animated Canvas farm with sheep, goats, an alpaca, weather, and night scenes
 - Physical keyboard and touch-friendly on-screen controls
@@ -130,10 +131,10 @@ Otherwise, run `npm run deploy` and select from the accounts available to your W
 
 ## Usage
 
-1. Start the trail and read the current pasture objective.
+1. Start with the new-tab lesson or choose any feature from the lesson strip.
 2. Enter the displayed Herdr sequence on a physical keyboard, such as `Ctrl+B`, release, then `C`.
 3. On touch devices, tap `Ctrl+B` and then the highlighted action key.
-4. Complete each pasture to unlock the next lesson and improve its star result.
+4. Complete lessons in any order and replay them to improve their star result.
 5. Open **Practice mix** for a randomized ten-command session.
 6. Open **Field guide** for a compact shortcut reference.
 

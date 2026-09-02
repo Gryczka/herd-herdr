@@ -46,10 +46,10 @@
 				</div>
 			</header>
 
-			<nav class="trail-panel" aria-label="Pasture lessons">
+			<nav class="trail-panel" id="lesson-picker" tabindex="-1" aria-label="Choose a Herdr feature lesson">
 				<div class="trail-heading">
-					<span>THE HIGH MEADOW TRAIL</span>
-					<strong id="trail-progress">Pasture 1 of 12</strong>
+					<span>CHOOSE A FEATURE · EVERY LESSON IS OPEN</span>
+					<strong id="trail-progress">Lesson 1 of 12</strong>
 				</div>
 				<div class="trail-track" id="trail-track"></div>
 			</nav>
@@ -124,6 +124,13 @@
 							<strong id="command-name">NEW TAB</strong>
 						</div>
 						<div class="key-sequence" id="key-sequence" aria-label="Press Control B, then C"></div>
+						<form class="name-form" id="name-form" hidden>
+							<label for="name-input">TYPE A NAME</label>
+							<div>
+								<input id="name-input" name="name" type="text" maxlength="32" autocomplete="off" spellcheck="false" />
+								<button type="submit">Save <kbd>Enter</kbd></button>
+							</div>
+						</form>
 						<p class="coach-note" id="coach-note">
 							Press the prefix, release it, then press the action key. Herdr sees the second key; your shell never does.
 						</p>
@@ -137,7 +144,7 @@
 						<div class="step-dots" id="step-dots"></div>
 					</div>
 
-					<section class="control-deck" aria-label="On-screen practice keyboard">
+					<section class="control-deck" id="control-deck" aria-label="On-screen practice keyboard">
 						<div class="control-deck-heading">
 							<span>ON-SCREEN KEYS</span>
 							<small>Tap these if you do not have a keyboard</small>
@@ -168,7 +175,7 @@
 				</div>
 				<div class="rail-card">
 					<small>SHORTCUTS LEARNED</small>
-					<strong id="learned-count">0 / 24</strong>
+					<strong id="learned-count">0 / 27</strong>
 				</div>
 				<div class="rail-card">
 					<small>TRAIL STARS</small>
@@ -194,15 +201,16 @@
 				<span class="dialog-kicker">THE HIGH MEADOWS NEED YOU</span>
 				<h2>Ready to run with the herd?</h2>
 				<p>
-					Moss knows sheep. You teach him Herdr. Use real Herdr shortcuts to build pens, move between panes, rotate fields, and leave every
-					agent safe for the night.
+					Moss knows sheep. You teach him Herdr. A workspace owns tabs, and each tab owns a pane layout. Start at the beginning or choose
+					any feature you want to practice.
 				</p>
 				<div class="prefix-demo" aria-label="Press Control B, release, then press an action key">
 					<kbd>Ctrl</kbd><span>+</span><kbd>B</kbd><i>release, then</i><kbd>action</kbd>
 				</div>
 				<div class="dialog-actions">
-					<button class="primary-button" id="start-button" type="button">Start the trail</button>
-					<button class="secondary-button" id="continue-button" type="button" hidden>Continue from pasture 1</button>
+					<button class="primary-button" id="start-button" type="button">Start with new tabs</button>
+					<button class="secondary-button" id="continue-button" type="button" hidden>Continue from lesson 1</button>
+					<button class="secondary-button" id="browse-button" type="button">Choose any lesson</button>
 				</div>
 				<small class="dialog-fineprint">No install required. Progress stays in this browser.</small>
 			</div>
@@ -218,11 +226,11 @@
 				<div class="earned-stars" id="earned-stars" aria-label="Three stars earned">&#9733;&#9733;&#9733;</div>
 				<p id="complete-copy">You built a new pen without rattling a single gate.</p>
 				<div class="learned-shortcut">
-					<small>SHORTCUT LEARNED</small>
+					<small>SHORTCUTS LEARNED</small>
 					<strong id="learned-shortcut">prefix+c</strong>
 				</div>
 				<div class="dialog-actions">
-					<button class="primary-button" id="next-level-button" type="button">Next pasture</button>
+					<button class="primary-button" id="next-level-button" type="button">Next lesson</button>
 					<button class="secondary-button" id="replay-level-button" type="button">Run it again</button>
 				</div>
 			</div>

@@ -24,30 +24,45 @@ const direct = (key, action, command, prompt) => ({
 	prompt,
 });
 
+const named = (placeholder, action, command, prompt) => ({
+	mode: 'text',
+	key: 'name',
+	placeholder,
+	action,
+	command,
+	prompt,
+});
+
 /** Ordered levels in the guided shortcut campaign. */
 export const CAMPAIGN_LEVELS = [
 	{
 		id: 'fresh-pen',
 		number: '01',
+		navLabel: 'New tab',
 		chapter: 'THE FOLD',
 		title: 'A Fresh Pen',
-		story: 'Three lambs arrived before breakfast. Give them a tab of their own before they taste the herb garden.',
-		goal: 'Build a new pen for Clover, Dot, and Marzipan.',
+		story:
+			'Three lambs arrived before breakfast. Give them a named tab of their own inside the current workspace, without splitting the pane.',
+		goal: 'Create and name a Lamb Fold tab for Clover, Dot, and Marzipan.',
 		scene: 'build',
-		controls: ['c', 'n', 'x'],
-		steps: [prefixed('c', 'new-tab', 'New tab', 'Raise a fresh pen for the waiting lambs.')],
+		controls: ['c'],
+		steps: [
+			prefixed('c', 'new-tab-prompt', 'New tab', 'Open the new-tab naming prompt.'),
+			named('Lamb Fold', 'create-named-tab', 'Name new tab', 'Choose a useful name for the new tab.'),
+		],
 		learned: ['prefix+c'],
 		reward: 'The lambs are tucked in.',
-		complete: 'A new Herdr tab works like a fresh pen: separate space, same workspace.',
-		note: 'The default Herdr prefix is Ctrl+B, just like tmux.',
+		complete: 'The new tab has its own pane layout inside the same workspace. No split was added to the original tab.',
+		note: 'Herdr asks for a new tab name by default. Each new tab starts with one pane.',
 	},
 	{
 		id: 'split-flock',
 		number: '02',
+		navLabel: 'Split panes',
 		chapter: 'FENCE WORK',
 		title: 'Split the Flock',
-		story: 'The goats have discovered the sheep feed. Divide this tab into right and lower panes before breakfast becomes a riot.',
-		goal: 'Make one right-hand pen, then one lower pen.',
+		story: 'The goats found the sheep feed. Divide the active tab into right and lower panes; the tab itself stays the same.',
+		goal: 'Turn one pane into a three-pane layout.',
 		scene: 'split',
 		controls: ['v', '-', 'c'],
 		steps: [
@@ -62,6 +77,7 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'pane-patrol',
 		number: '03',
+		navLabel: 'Move focus',
 		chapter: 'DOG WORK',
 		title: 'Moss on Patrol',
 		story: 'A good dog checks every gate. Move focus between the four panes while Moss follows your attention.',
@@ -82,35 +98,39 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'pasture-rotation',
 		number: '04',
+		navLabel: 'Cycle + rename',
 		chapter: 'ROTATION',
 		title: 'Pasture Rotation',
-		story: 'The east meadow needs a rest. Cycle through tabs to find fresh grass, then back up when you pass the clover field.',
-		goal: 'Move forward twice, then return to the previous tab.',
+		story: 'Cycle through tabs to find fresh grass, back up when you pass it, then give the active tab a useful name.',
+		goal: 'Move forward twice, return once, and rename the active tab.',
 		scene: 'tabs',
-		controls: ['n', 'p', 'c'],
+		controls: ['n', 'p', 'shift+t'],
 		steps: [
 			prefixed('n', 'next-tab', 'Next tab', 'Rotate to the next pasture tab.'),
 			prefixed('n', 'next-tab', 'Next tab', 'Keep moving to the clover pasture.'),
 			prefixed('p', 'previous-tab', 'Previous tab', 'Step back to the pasture you just passed.'),
+			prefixed('shift+t', 'rename-tab-prompt', 'Rename tab', 'Open the active tab rename prompt.'),
+			named('Shearing', 'rename-tab', 'Save tab name', 'Replace the generic tab name with something memorable.'),
 		],
-		learned: ['prefix+n', 'prefix+p'],
+		learned: ['prefix+n', 'prefix+p', 'prefix+shift+t'],
 		reward: 'The grass gets a breather.',
-		complete: 'Next and previous tab cycle through work without touching the processes inside.',
-		note: 'Use prefix+n and prefix+p when the target tab is nearby.',
+		complete: 'Next and previous cycle through tabs, and rename changes the active tab label without touching its panes.',
+		note: 'Use prefix+n and prefix+p for nearby tabs; prefix+Shift+T renames the active tab.',
 	},
 	{
 		id: 'numbered-pens',
 		number: '05',
+		navLabel: 'Jump to tab',
 		chapter: 'EAR TAGS',
-		title: 'The Numbered Pens',
-		story: 'Three animals ignored the sorting board. Jump directly to their numbered tabs instead of walking the whole fence line.',
-		goal: 'Check pens 3, 1, and 2 in that order.',
+		title: 'The Numbered Tabs',
+		story: 'Three animals ignored the sorting board. Jump directly to their numbered tabs instead of cycling through every one.',
+		goal: 'Check tabs 3, 1, and 2 in that order.',
 		scene: 'numbered',
 		controls: ['1', '2', '3'],
 		steps: [
-			prefixed('3', 'jump-3', 'Jump to tab 3', 'Find Thistle in numbered pen 3.'),
-			prefixed('1', 'jump-1', 'Jump to tab 1', 'Check Clover in numbered pen 1.'),
-			prefixed('2', 'jump-2', 'Jump to tab 2', 'Finish with Button in numbered pen 2.'),
+			prefixed('3', 'jump-3', 'Jump to tab 3', 'Find Thistle in tab 3.'),
+			prefixed('1', 'jump-1', 'Jump to tab 1', 'Check Clover in tab 1.'),
+			prefixed('2', 'jump-2', 'Jump to tab 2', 'Finish with Button in tab 2.'),
 		],
 		learned: ['prefix+1..9'],
 		reward: 'Every ear tag accounted for.',
@@ -120,6 +140,7 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'lookout-duty',
 		number: '06',
+		navLabel: 'Zoom pane',
 		chapter: 'HIGH GROUND',
 		title: 'Lookout Duty',
 		story: 'There is a suspicious gap near the north rail. Zoom the focused pane to inspect it, then restore the full farm view.',
@@ -138,6 +159,7 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'swap-meet',
 		number: '07',
+		navLabel: 'Swap panes',
 		chapter: 'TRADING PLACES',
 		title: 'A Fair Exchange',
 		story: 'The fleece judging line is backwards. Swap whole panes without interrupting either flock.',
@@ -156,6 +178,7 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'wool-ledger',
 		number: '08',
+		navLabel: 'Copy mode',
 		chapter: 'RECORD KEEPING',
 		title: 'The Wool Ledger',
 		story: 'The co-op needs three lines from today’s tally. Enter copy mode, start a selection, move down twice, and copy it.',
@@ -177,39 +200,46 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'across-range',
 		number: '09',
+		navLabel: 'Spaces',
 		chapter: 'THE RANGE',
 		title: 'Across the Range',
 		story:
-			'Button the goat has wandered into another workspace. Open the sidebar, navigate down a field, and use Herdr’s pickers to find him.',
-		goal: 'Use the sidebar, workspace navigator, goto picker, and help map.',
+			'Create a project workspace, shown as a Space in Herdr’s sidebar. Name it, then use the sidebar and navigation tools to cross the range.',
+		goal: 'Create and name Bramble Hill, then explore workspace navigation.',
 		scene: 'range',
-		controls: ['b', 'w', 'g', '?', 'j', 'enter'],
+		controls: ['shift+n', 'shift+w', 'b', 'w', 'arrowdown', 'enter', 'g', 'escape', '?'],
 		steps: [
-			prefixed('b', 'toggle-sidebar', 'Toggle sidebar', 'Open the farm-wide sidebar.'),
+			prefixed('shift+n', 'new-workspace', 'New workspace', 'Create a new project workspace.'),
+			prefixed('shift+w', 'rename-workspace-prompt', 'Rename workspace', 'Open the selected workspace rename prompt.'),
+			named('Bramble Hill', 'rename-workspace', 'Save workspace name', 'Give the new Space a recognizable project name.'),
+			prefixed('b', 'toggle-sidebar', 'Toggle sidebar', 'Collapse the farm-wide sidebar.'),
 			prefixed('w', 'workspace-nav', 'Workspace navigation', 'Enter workspace navigation mode.'),
-			direct('j', 'nav-down', 'Navigate down', 'Move the navigator down one workspace.'),
+			direct('arrowdown', 'nav-down', 'Navigate down', 'Move the navigator down one workspace with the Down Arrow.'),
 			direct('enter', 'nav-confirm', 'Confirm workspace', 'Open the highlighted field.'),
 			prefixed('g', 'goto-picker', 'Goto picker', 'Open the searchable goto picker.'),
+			direct('escape', 'close-picker', 'Close picker', 'Leave the picker and return to terminal mode.'),
 			prefixed('?', 'key-help', 'Keybinding help', 'Open the active binding map whenever you are lost.'),
 		],
-		learned: ['prefix+b', 'prefix+w', 'j/k + enter in navigate mode', 'prefix+g', 'prefix+?'],
-		reward: 'Button found on Bramble Hill.',
-		complete: 'The sidebar shows the herd; navigate and goto get you to the exact workspace, tab, or agent.',
-		note: 'Prefix+? shows the bindings active in your own Herdr config.',
+		learned: ['prefix+shift+n', 'prefix+shift+w', 'prefix+b', 'prefix+w', 'up/down + enter in navigate mode', 'prefix+g', 'prefix+?'],
+		reward: 'Bramble named. Button found on North Ridge.',
+		complete: 'Spaces are workspace rows in the sidebar; each workspace owns its own tabs, panes, and agents.',
+		note: 'New workspaces use a generated name by default. Prefix+Shift+W renames the selected workspace.',
 	},
 	{
 		id: 'closing-time',
 		number: '10',
+		navLabel: 'Close safely',
 		chapter: 'CLOSING TIME',
 		title: 'Leave No Gate Open',
 		story: 'The temporary quarantine area is empty. Close its pane, tab, and workspace in order, leaving the occupied pens untouched.',
-		goal: 'Close the empty pane, tab, and workspace.',
+		goal: 'Close the empty pane and tab, then confirm the workspace close.',
 		scene: 'close',
-		controls: ['x', 'shift+x', 'shift+d'],
+		controls: ['x', 'shift+x', 'shift+d', 'enter'],
 		steps: [
 			prefixed('x', 'close-pane', 'Close pane', 'Remove the empty quarantine pane.'),
 			prefixed('shift+x', 'close-tab', 'Close tab', 'Close its now-unused tab.'),
-			prefixed('shift+d', 'close-workspace', 'Close workspace', 'Close the temporary workspace.'),
+			prefixed('shift+d', 'close-workspace-prompt', 'Close workspace', 'Open the workspace close confirmation.'),
+			direct('enter', 'confirm-close-workspace', 'Confirm close', 'Confirm that the temporary workspace should close.'),
 		],
 		learned: ['prefix+x', 'prefix+shift+x', 'prefix+shift+d'],
 		reward: 'Only occupied fields remain.',
@@ -219,6 +249,7 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'night-watch',
 		number: '11',
+		navLabel: 'Detach',
 		chapter: 'AFTER DARK',
 		title: 'Night Watch',
 		story: 'The gates are latched and the agents are still working. Detach from Herdr and let the whole layout keep running without you.',
@@ -234,21 +265,24 @@ export const CAMPAIGN_LEVELS = [
 	{
 		id: 'grand-roundup',
 		number: '12',
+		navLabel: 'Full roundup',
 		chapter: 'THE ROUNDUP',
 		title: 'Storm over Bramble Hill',
 		story: 'A fast storm is crossing the ridge. Build, split, navigate, inspect, and settle the herd using everything Moss has learned.',
 		goal: 'Complete the full roundup without losing your shortcut streak.',
 		scene: 'finale',
-		controls: ['c', 'v', 'h', 'j', 'k', 'l', 'n', '3', 'z', 'w', 'q'],
+		controls: ['c', 'v', 'h', 'j', 'k', 'l', 'n', '3', 'z', 'w', 'escape', 'q'],
 		steps: [
-			prefixed('c', 'new-tab', 'New storm pen', 'Open a fresh tab for the hill flock.'),
+			prefixed('c', 'new-tab-prompt', 'New storm tab', 'Open a fresh tab for the hill flock.'),
+			named('Storm Watch', 'create-named-tab', 'Name storm tab', 'Name the new tab before the storm reaches the ridge.'),
 			prefixed('v', 'split-right', 'Split shelter', 'Divide the shelter with a right-hand pane.'),
 			prefixed('l', 'focus-right', 'Focus right', 'Move Moss into the new pane.'),
-			prefixed('n', 'next-tab', 'Next tab', 'Rotate to the ridge pasture.'),
+			prefixed('n', 'next-tab', 'Next tab', 'Cycle onward from Storm Watch to the home tab.'),
 			prefixed('3', 'jump-3', 'Jump to tab 3', 'Jump directly to the barn tab.'),
 			prefixed('z', 'zoom-in', 'Zoom pane', 'Inspect the storm latch up close.'),
 			prefixed('b', 'toggle-sidebar', 'Open sidebar', 'Check the full herd at a glance.'),
 			prefixed('w', 'workspace-nav', 'Workspace navigation', 'Open the field navigator.'),
+			direct('escape', 'nav-cancel', 'Leave navigation', 'Return to terminal mode without changing workspace.'),
 			prefixed('q', 'detach', 'Detach', 'Leave the settled herd running through the storm.'),
 		],
 		learned: [],
@@ -258,28 +292,24 @@ export const CAMPAIGN_LEVELS = [
 	},
 ];
 
+/** Number of distinct shortcut groups introduced by the campaign. */
+export const TOTAL_SHORTCUTS = new Set(CAMPAIGN_LEVELS.flatMap((level) => level.learned)).size;
+
 /** Shortcut prompts available to randomized practice sessions. */
 export const PRACTICE_POOL = [
-	prefixed('c', 'new-tab', 'New tab', 'Raise a fresh pen.'),
-	prefixed('v', 'split-right', 'Split right', 'Divide the pen to the right.'),
-	prefixed('-', 'split-down', 'Split down', 'Divide the pen downward.'),
 	prefixed('h', 'focus-left', 'Focus left', 'Send Moss left.'),
 	prefixed('j', 'focus-down', 'Focus down', 'Send Moss down.'),
 	prefixed('k', 'focus-up', 'Focus up', 'Send Moss up.'),
 	prefixed('l', 'focus-right', 'Focus right', 'Send Moss right.'),
 	prefixed('n', 'next-tab', 'Next tab', 'Rotate to the next pasture.'),
 	prefixed('p', 'previous-tab', 'Previous tab', 'Return to the previous pasture.'),
-	prefixed('1', 'jump-1', 'Jump to tab 1', 'Check numbered pen 1.'),
-	prefixed('2', 'jump-2', 'Jump to tab 2', 'Check numbered pen 2.'),
-	prefixed('3', 'jump-3', 'Jump to tab 3', 'Check numbered pen 3.'),
+	prefixed('1', 'jump-1', 'Jump to tab 1', 'Open tab 1.'),
+	prefixed('2', 'jump-2', 'Jump to tab 2', 'Open tab 2.'),
+	prefixed('3', 'jump-3', 'Jump to tab 3', 'Open tab 3.'),
 	prefixed('z', 'zoom-in', 'Zoom pane', 'Inspect the focused pasture.'),
 	prefixed('shift+l', 'swap-right', 'Swap pane right', 'Move the whole pane right.'),
 	prefixed('shift+h', 'swap-left', 'Swap pane left', 'Move the whole pane left.'),
 	prefixed('b', 'toggle-sidebar', 'Toggle sidebar', 'Show or hide the herd overview.'),
-	prefixed('w', 'workspace-nav', 'Workspace navigation', 'Open the field navigator.'),
-	prefixed('g', 'goto-picker', 'Goto picker', 'Find a specific agent or tab.'),
-	prefixed('?', 'key-help', 'Keybinding help', 'Open your active key map.'),
-	prefixed('q', 'detach', 'Detach', 'Leave everything running.'),
 ];
 
 /** Reference sections rendered in the in-game field guide. */
@@ -314,7 +344,7 @@ export const GUIDE_SECTIONS = [
 		],
 	},
 	{
-		title: 'Workspaces and session',
+		title: 'Spaces, workspaces, and session',
 		items: [
 			['New workspace', 'prefix+shift+n'],
 			['Rename workspace', 'prefix+shift+w'],
@@ -341,12 +371,18 @@ export function keyLabel(key) {
 		enter: 'Enter',
 		escape: 'Esc',
 		space: 'Space',
+		arrowdown: '↓',
+		arrowup: '↑',
+		name: 'Name',
 		'shift+h': 'Shift+H',
 		'shift+j': 'Shift+J',
 		'shift+k': 'Shift+K',
 		'shift+l': 'Shift+L',
 		'shift+x': 'Shift+X',
 		'shift+d': 'Shift+D',
+		'shift+n': 'Shift+N',
+		'shift+t': 'Shift+T',
+		'shift+w': 'Shift+W',
 	};
 
 	return labels[key] ?? key.toUpperCase();
@@ -359,6 +395,7 @@ export function keyLabel(key) {
  * @returns {string} Display-ready shortcut sequence.
  */
 export function shortcutLabel(step) {
+	if (step.mode === 'text') return 'Type a name, then press Enter';
 	if (step.mode === 'direct') return keyLabel(step.key);
 	return `Ctrl+B, then ${keyLabel(step.key)}`;
 }
@@ -424,12 +461,15 @@ export function readProgress(storage) {
 	try {
 		const parsed = JSON.parse(storage.getItem(STORAGE_KEY));
 		if (!parsed || typeof parsed !== 'object') return fallback;
+		const completed = parsed.completed && typeof parsed.completed === 'object' ? parsed.completed : {};
+		let nextLevel = clampInteger(parsed.nextLevel, 0, CAMPAIGN_LEVELS.length - 1, 0);
+		if (completed[CAMPAIGN_LEVELS[nextLevel].id]) nextLevel = findNextLessonIndex(completed, nextLevel);
 
 		return {
 			unlocked: clampInteger(parsed.unlocked, 1, CAMPAIGN_LEVELS.length, 1),
-			nextLevel: clampInteger(parsed.nextLevel, 0, CAMPAIGN_LEVELS.length - 1, 0),
+			nextLevel,
 			wool: clampInteger(parsed.wool, 0, 999999, 0),
-			completed: parsed.completed && typeof parsed.completed === 'object' ? parsed.completed : {},
+			completed,
 		};
 	} catch {
 		return fallback;
@@ -472,6 +512,19 @@ export function countLearned(completed) {
  */
 export function countStars(completed) {
 	return Object.values(completed).reduce((total, result) => total + clampInteger(result?.stars, 0, 3, 0), 0);
+}
+
+/** Return whether every campaign lesson has a persisted result. */
+export function isCampaignComplete(completed) {
+	return CAMPAIGN_LEVELS.every((level) => completed[level.id]);
+}
+
+/** Find the next incomplete lesson, wrapping once after the current lesson. */
+export function findNextLessonIndex(completed, currentIndex = -1) {
+	const laterIncomplete = CAMPAIGN_LEVELS.findIndex((level, index) => index > currentIndex && !completed[level.id]);
+	if (laterIncomplete >= 0) return laterIncomplete;
+	const firstIncomplete = CAMPAIGN_LEVELS.findIndex((level) => !completed[level.id]);
+	return firstIncomplete >= 0 ? firstIncomplete : CAMPAIGN_LEVELS.length - 1;
 }
 
 /**
