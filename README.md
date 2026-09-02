@@ -7,7 +7,7 @@
 
 > **Status:** This is a reference implementation shared as-is. It is not actively maintained; support is best-effort via [GitHub Issues](https://github.com/Gryczka/herd-herdr/issues).
 
-**[Play the live demo](https://herd-herdr.cloudflare.app)**
+**[Play the live demo](https://herd-herdr.dwarven.workers.dev)**
 
 ![Herd Herdr showing the first shortcut lesson in an illustrated pasture](docs/screenshots/demo.png)
 
