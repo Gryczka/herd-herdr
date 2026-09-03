@@ -29,6 +29,8 @@ Herd Herdr teaches the default [Herdr](https://herdr.dev/) terminal shortcuts th
 
 ## Architecture
 
+![Herd Herdr Cloudflare architecture](docs/architecture-tile-dark.png)
+
 ```mermaid
 flowchart LR
 	Visitor[Player] --> Assets[Workers Static Assets]
