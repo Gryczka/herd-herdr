@@ -1,0 +1,31 @@
+README.md
+  s_42db7a767ebf9b::t_5b5306d8aea045 3-5,79-80
+package-lock.json
+  s_fd41f2d4a8ceb7::t_84836fbbb23606 16,49-51,66-68,83-85,100-102,117-119,804-806,823,827-829,846,850-852,860,870-872,887-889,904-906,921-923,938-940,955-957,972-974,989-991,1006-1008,1023-1025,1040-1042,1059,1063-1065,1082,1086-1088,1105,1109-1111,1128,1132-1134,1151,1155-1157,1174,1178-1180,1197,1201-1203,1220,1224-1226,1231,1241-1243,1251,1261-1263,1281-1283,1301-1303,2760-2762,2767,2769,3057-3059,3065,3074-3103,3480-3482,3493-3497,3501-3503,3511,3514,3528
+package.json
+  s_42db7a767ebf9b::t_fbc03fa390297c 16,32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3fbf000975ba20e75ae24584ddf5e3e3274939ee",
+  "prompts": {},
+  "sessions": {
+    "s_42db7a767ebf9b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f4f0b18c1ffeDIYM31AWdRfrHf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "gryczka <pgryczka@cloudflare.com>"
+    },
+    "s_fd41f2d4a8ceb7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f4da93b5fffe6Gk9ahWJfsnAMr",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "gryczka <pgryczka@cloudflare.com>"
+    }
+  }
+}
