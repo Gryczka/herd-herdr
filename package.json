@@ -13,6 +13,7 @@
 		"check": "npm run lint && npm run test && npm run build",
 		"deploy": "npm run lint:fix && npm run lint && npm run deploy:raw",
 		"deploy:raw": "wrangler deploy",
+		"temporary:deploy": "npm run lint:fix && npm run lint && wrangler deploy --temporary",
 		"dev": "wrangler dev",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
@@ -28,6 +29,6 @@
 		"globals": "^17.11.0",
 		"prettier": "^3.9.6",
 		"vitest": "~4.1.0",
-		"wrangler": "^4.127.1"
+		"wrangler": "4.134.0"
 	}
 }

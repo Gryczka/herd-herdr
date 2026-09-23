@@ -1,5 +1,8 @@
 # Herd Herdr
 
+> [!IMPORTANT]
+> **Temporary-account preview:** This is the `temporary-account-preview` branch. Wrangler must be unauthenticated: active OAuth credentials, an API token, or a global API key cause `--temporary` to error. After `npm run temporary:deploy`, complete the Cloudflare claim flow within approximately 60 minutes or Cloudflare deletes the temporary account and its resources. Use [`main`](https://github.com/Gryczka/herd-herdr/tree/main) for the normal full/default variant and standard authenticated deployment workflow. See [Claim deployments (temporary accounts)](https://developers.cloudflare.com/workers/platform/claim-deployments/).
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Gryczka/herd-herdr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -73,7 +76,8 @@ Cloudflare Workers serves the dependency-free application as static assets. In t
 
 - Node.js 22 or newer
 - npm
-- A Cloudflare account and Wrangler login only when deploying your own copy
+- A Cloudflare account and Wrangler login only for a normal permanent deployment
+- No active Wrangler OAuth, API token, or global API key when using `npm run temporary:deploy`
 
 ## Getting Started
 
