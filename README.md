@@ -1,5 +1,7 @@
 # Herd Herdr
 
+See [public discovery policy and deployment readiness](docs/app-garden-discovery.md).
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Gryczka/herd-herdr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 

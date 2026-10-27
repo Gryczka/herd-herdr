@@ -1442,6 +1442,24 @@ kbd {
 	box-shadow: 0 3px 0 var(--ink);
 }
 
+.demo-intro {
+	margin-top: 24px;
+	padding: 20px;
+	background: var(--paper-bright);
+	border: 2px solid var(--ink);
+	border-radius: 16px;
+	line-height: 1.6;
+}
+
+.demo-intro h2 {
+	font-size: 1.25rem;
+}
+
+.demo-intro a {
+	color: var(--ink);
+	text-underline-offset: 3px;
+}
+
 .guide-intro {
 	display: flex;
 	align-items: center;
